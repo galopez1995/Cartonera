@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+
+        <!--Import Google Icon Font-->
+        <link href="http://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <!--Import materialize.css-->
+        <link type="text/css" rel="stylesheet" href="/ITCM/Contenido/Materialize/css/materialize.min.css"  media="screen,projection"/>
+
+        <!--Let browser know website is optimized for mobile-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <meta name="author" content="mba-software">
+
+        <!--Import jQuery before materialize.js-->
+        <script type="text/javascript" src="/ITCM/Contenido/Js/jquery-1.11.3.min.js"></script>
+        <script type="text/javascript" src="/ITCM/Contenido/Materialize/js/materialize.min.js"></script>
+
+        <script type="text/javascript" src="/ITCM/Contenido/js/hammer.min.js"></script>
+
+        <link rel="stylesheet" href="/ITCM/Contenido/Css/Fuente/LCDBOLD/font.css"/>
+
+        <link rel="stylesheet" href="/ITCM/Contenido/Css/custom.css"/>
+
+        <!--<script type="text/javascript" src="/ITCM/Contenido/Js/Graficos2.js"></script>-->
+
+        <script type="text/javascript" src="/ITCM/Contenido/Highcharts/js/highcharts.js"></script>
+        <script src="/ITCM/Contenido/Highcharts/js/modules/exporting.js"></script>
+
+        <style>
+        /***************
+            HTML Styles
+        ***************/
+        footer{
+            bottom: 0 !important;
+            width: 100% !important;
+        }
+
+		
+        .Alarma {
+            background-color: red !important;
+            color: black !important;
+        }
+
+        .Alarma h1 {
+            color: black !important;
+        }
+		
+        ${demo.css}
+
+        </style>
+        <script>
+			var alert_cierre_muelle=false;
+			var clase_muelles='s12';
+			var fuente_texto='15px !importan';
+			
+            $(document).ready(function(){
+                $(".button-collapse").sideNav();
+
+                $(".section a").click(function(){
+                   $(this).css("background-color","#eeeeee !important");
+                });
+
+                $('ul.tabs').tabs();
+
+				setInterval(CargarMuelle, 4000);     
+				
+				CargarIndicadoresFechas('INICIAL');				
+            });
+
+			$(document).on('click', '#toast-container .toast', function() {
+				AprobarCierreMuelle();
+				
+				$(this).fadeOut(function(){
+					$(this).remove();
+				});
+			});
+
+            function VerMuelles(clase){
+                var class_remove='';
+				clase_muelles=clase;
+					
+                if(clase=='s12'){
+                    $('.Muelles').removeClass('s5');
+                    $('.Muelles').toggleClass(clase);
+				
+					fuente_texto='15px !important';
+					$('.Texto').css('font-size','15px !important');
+                    $('.FuenteLCD').css('font-size','70px !important');
+                }
+                else if(clase=='s5'){
+                    $('.Muelles').removeClass('s12');
+                    $('.Muelles').toggleClass(clase);
+					
+					fuente_texto='7px !important';
+				
+					$('.Texto').css('font-size','7px !important');
+                    $('.FuenteLCD').css('font-size','100px !important');
+                }
+            }
+
+            function AprobarCierreMuelle(){
+                //location.href=location.origin+location.pathname+'aprobar_muelle.html';
+                location.href='aprobar_muelle.html';
+                return false;
+            }
+        
+			function CargarMuelle() {
+                $.ajax({
+                    type: "POST",
+                    url: "/ITC/TableroMuelleMobil/TableroMuelleMaster?opcion=MUELLES",
+                    cache: false,
+					contentType: "application/json; charset=utf-8",
+					//data:{opcion:'MUELLES'},
+					dataType: "json",
+                    success: function (data) {
+
+                        $("#ContMuelles").empty();
+
+                        if (data.length <= 0) {
+                            //$("#ContMuelles").append('<h1>NO HAY DESPACHOS EN PROCESO EN ESTE MOMENTO</h1>');
+                            return false;
+                        }
+						var contador_alarmas=0;
+                        //Actualizar Info de los muelles
+                        data.forEach(function (Muelle) {
+                           
+                            console.log('IP Actual: ' + Muelle.IpEquipoActual);
+                      				
+							if(Muelle.Vehiculo==null)
+								Muelle.Vehiculo='';
+                          
+                            $("#ContMuelles").append('<div class="col '+clase_muelles+' Muelles">' +
+                                '<div class="card">' +
+									'<div class="card-image waves-effect waves-block waves-light"  style="text-align: center;height: 140px !important;">' +
+										'<span class="FuenteLCD  Porcentaje_' + Muelle.Muelle + '" style="color:' + Muelle.ColorPorcentajeUtilizacion + ';">' + Muelle.PorcentajeUtilizacion + '</span>' +
+                                    '</div>' +
+                                    '<div class="card-content">' +
+                                        '<span class="card-title activator grey-text text-darken-4">#&nbsp;<code>' + Muelle.Muelle + '</code></span>' +
+										//'<span class="card-title activator grey-text text-darken-4">#&nbsp;<code>' + Muelle.Muelle + '</code><i class="material-icons right">more_vert</i></span>' +
+                                        '<table>' +
+                                            '<tr>' +
+                                                '<td  class="Texto" style="font-size:' + fuente_texto + ';"><p>TC:&nbsp;<span style="color:' + Muelle.ColorTiempototalCargue + ';">' + Muelle.TiempoTotalCargue + '</span></p></td>' +
+                                                '<td  class="Texto" style="font-size:' + fuente_texto + ';"><p>TE:&nbsp;<span style="color:' + Muelle.ColorTiempoUltimaEstiba + ';">' + Muelle.TiempoUltimaEstiba + '</span></p></td>' +
+                                            '</tr>' +
+											 '<tr>' +
+                                                '<td class="Texto" style="font-size:' + fuente_texto + ';">' + Muelle.NoDespacho+ '</td>' +
+                                                '<td class="Texto" style="font-size:' + fuente_texto + ';"> ' +Muelle.Vehiculo+ '</td>' +
+                                            '</tr>' +
+                                        '</table>' +
+                                    '</div>' +
+                                    //'<div class="card-reveal">' +
+                                        //'<span class="card-title grey-text text-darken-4">Muelle No. <code>' + Muelle.Muelle + '</code><i class="material-icons right">close</i></span>' +
+                                        //'<p>Muelle No. '+  Muelle.Muelle +' Despacho No. '+ Muelle.NoDespacho +' inicio cargue ' + Muelle.TiempoTotalCargue + 'y actualmente cuenta con un % de cubicaje del <code>' + Muelle.PorcentajeUtilizacion + '</code> la ultima estiba fue cargada hace '+Muelle.TiempoUltimaEstiba+'</p>' +
+                                    //'</div>' +
+                                '</div>' +
+                            '</div>');
+							
+							if (Muelle.Accion == 'ALARMA') {
+								//Activa Alarma para el muelle
+								if (Muelle.SonarAlarma == 1 || Muelle.SonarAlarma == 2) {     
+									//setInterval(function () { $(".Porcentaje_" + Muelle.Muelle).toggleClass("Alarma"); }, 1000);
+									$(".Porcentaje_" + Muelle.Muelle).toggleClass("Alarma", 100);
+									contador_alarmas=contador_alarmas+1;
+								}
+								else {
+									$(".Porcentaje_" + Muelle.Muelle).removeClass("Alarma");
+								}                     
+							}	
+							else {
+								$(".Porcentaje_" + Muelle.Muelle).removeClass("Alarma");
+							}  
+							
+						});
+							
+						if(alert_cierre_muelle==false){
+							if(contador_alarmas>0){
+								alert_cierre_muelle=true;
+								Materialize.toast('Hay '+contador_alarmas+' muelles pendientes por cerrar', 9999999999999999999999,'red',function(){AprobarCierreMuelle();});
+							}
+						}
+					},
+                    error: function (result) {
+                        //alert(':ERROR ' + result.statusText);
+                    }
+                });
+            }
+				
+			//Indicadores
+				
+			function CargarGraficoIndicadores(DataIndicadores){
+				$('#grafico').highcharts({
+					chart: {
+						plotBackgroundColor: null,
+						plotBorderWidth: null,
+						plotShadow: false,
+						type: 'pie'
+					},
+					title: {
+						text: ''
+					},
+					tooltip: {
+						pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+					},
+					plotOptions: {
+						pie: {
+							allowPointSelect: true,
+							cursor: 'pointer',
+							dataLabels: {
+								enabled: true,
+								format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+								style: {
+									color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+								}
+							}
+						}
+					},
+					series: [{
+						name: "",
+						colorByPoint: true,
+						data: DataIndicadores
+					}]
+				});
+			}
+	
+			function CargarIndicadoresTransporte(){
+				/*if($("#NoDespacho").val()=='' || $("#Placa_Vehiculo").val()==''){
+					Materialize.toast('Completar campos vacios.', 5000,'red',0);
+					return false;
+				}*/
+				
+				$.ajax({
+                    type: "POST",
+                    url: "/ITC/TableroMuelleMobil/TableroMuelleMaster?opcion=INDICADORES&caso=1&NoDespacho="+$("#NoDespacho").val()+"&Placa_Vehiculo="+$("#Placa_Vehiculo").val(),
+                    cache: false,
+					contentType: "application/json; charset=utf-8",
+					//data:{opcion:'MUELLES'},
+					dataType: "json",
+                    success: function (data) {
+						CargarGraficoIndicadores(data);                          
+					},
+                    error: function (result) {
+                        //alert(':ERROR ' + result.statusText);
+                    }
+                });
+			}
+			
+			function CargarIndicadoresFechas(Tipo){
+				var fecha_inicial=null;
+				var fecha_final=null;
+				
+				if(Tipo=='INICIAL'){
+					var f = new Date();
+					fecha_inicial=f.getFullYear() + "-" + (f.getMonth() +1) + "-" + f.getDate();
+					fecha_final=fecha_inicial;
+				}else{
+					if($("#FechaInicial").val()=='' || $("#FechaFinal").val()==''){
+						Materialize.toast('Completar campos vacios.', 5000,'red',0);
+						return false;
+					}
+					else{
+						fecha_inicial=$("#FechaInicial").val();
+						fecha_final=$("#FechaFinal").val();
+					}
+				}
+			
+				$.ajax({
+                    type: "POST",
+                    url: "/ITC/TableroMuelleMobil/TableroMuelleMaster?opcion=INDICADORES&caso=2&FechaInicial="+fecha_inicial+"&FechaFinal="+fecha_final,
+                    cache: false,
+					contentType: "application/json; charset=utf-8",
+					//data:{opcion:'MUELLES'},
+					dataType: "json",
+                    success: function (data) {
+						CargarGraficoIndicadores(data);                          
+					},
+                    error: function (result) {
+                        //alert(':ERROR ' + result.statusText);
+                    }
+                });
+			}
+		
+			//Indicadores
+		</script>
+    </head>
+
+    <body>
+
+        <nav>
+            <div class="nav-wrapper">
+                <a href="index.html" class="brand-logo">Cartonera S.A</a>
+            </div>
+        </nav>
+
+        <div class="container">
+            <div class="row">
+                <div class="col s12">
+                    <ul class="tabs">
+                        <li class="tab col s6"><a class="active" href="#test1">Muelles</a></li>
+                        <li class="tab col s6"><a href="#test2">Indicadores</a></li>
+                        <!--<li class="tab col s4"><a href="#test3">Configuraci&oacute;n</a></li>-->
+                    </ul>
+                </div>
+
+
+                <!--Tab Estados Muelles-->
+                <div id="test1" class="col s12">
+                    <div class="container" id="auto">
+
+                        <br/>
+
+                        <div class="row">
+                            <div class="col s12">
+                                <a href="javascript:VerMuelles('s5');" class="btn-floating btn_resize"><i class="Medium material-icons">view_module</i></a>
+                                <a href="javascript:VerMuelles('s12');" class="btn-floating btn_resize"><i class="Medium material-icons">view_headline</i></a>
+                            </div>
+                        </div>
+                        <div class="divider"></div>
+                        <br/>
+
+                        <div class="row" id="ContMuelles">
+                            <!--<div class="col s12 Muelles">
+                                <div class="card">
+                                    <div class="card-image waves-effect waves-block waves-light" style="text-align: center;height: 120px !important;">
+                                        <span class="FuenteLCD">10</span>
+                                    </div>
+                                    <div class="card-content">
+                                        <span class="card-title activator grey-text text-darken-4">#&nbsp;<code>1</code><i class="material-icons right">more_vert</i></span>
+                                        <table>
+                                            <tr>
+                                                <td><p>T C.:&nbsp;<span>00:00:00</span></p></td>
+                                                <td><p>T E.:&nbsp;<span>00:00:00</span></p></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="card-reveal">
+                                        <span class="card-title grey-text text-darken-4">Muelle No. <code>1</code><i class="material-icons right">close</i></span>
+                                        <p>Muelle inicio carga yyyy-mm-dd hh:mm:ss y actualmente cuenta con un % de cubicaje del <code>1</code></p>
+                                    </div>
+                                </div>
+                            </div>-->
+                        </div>
+                    </div>
+                </div>
+
+                <!--Tab Indicadores-->
+                <div id="test2" class="col s12">
+					<div class="row">
+						<div class="col s12" style="display:none;">
+							<form class="col s12" method="post" id="form" name="form">
+								<div class="input-field col s4">
+									<i class="material-icons prefix">assignment</i>
+									<input id="NoDespacho" name="NoDespacho" placeholder="NoDespacho" type="text" class="validate" required="required">
+									<!--<label for="NoDespacho">NoDespacho</label>-->
+								</div>
+
+								<div class="input-field col s4">
+									<i class="material-icons prefix">payment</i>
+									<input id="Placa_Vehiculo" name="Placa_Vehiculo" placeholder="Placa Vehiculo"  type="text" class="validate" required="required">
+									<!--<label for="Placa_Vehiculo">Placa Vehiculo</label>-->
+								</div>	
+
+								<div class="input-field col s4">
+									<a href="javascript:CargarIndicadoresTransporte();" class="btn tooltipped  modal-trigger waves-effect waves-light green" style="margin-left: 15px;" data-position="bottom" data-delay="50" data-tooltip="Buscar Indicadores">Buscar</a>
+								</div>		
+							</form>
+						</div>
+						
+						<div class="col s12">
+							<form class="col s12" method="post" id="form" name="form">
+								<div class="input-field col s4">
+									<i class="material-icons prefix">today</i>
+									<input id="FechaInicial" name="FechaInicial" placeholder="Fecha Inicial" type="date" class="validate" required="required">
+									<!--<label for="FechaInicial">FechaInicial</label>-->
+								</div>
+
+								<div class="input-field col s4">
+									<i class="material-icons prefix">today</i>
+									<input id="FechaFinal" name="FechaFinal" placeholder="Fecha Final"  type="date" class="validate" required="required">
+									<!--<label for="FechaFinal">Fecha Final</label>-->
+								</div>	
+
+								<div class="input-field col s4">
+									<a href="javascript:CargarIndicadoresFechas('');" class="btn-floating darken-1 waves-effect waves-light green">
+										<i class="material-icons">search</i>
+									</a>
+									<!--<a href="javascript:CargarIndicadoresFechas();" class="btn tooltipped  modal-trigger waves-effect waves-light green" style="margin-left: 15px;" data-position="bottom" data-delay="50" data-tooltip="Buscar Indicadores">Buscar</a>-->
+								</div>		
+							</form>
+						</div>
+					<div>
+					
+					<div class="row">					
+						<div class="col s12">
+							<br/>
+							<div id="grafico" style="min-width: 310px; height: 400px; max-width: 600px; margin: 0 auto"></div>
+						</div>
+					</div>
+					<!--Tab Configuracion
+					<div id="test3" class="col s12">
+						Test 3
+					</div>-->
+				</div>
+            </div>
+        </div>
+
+        <footer class="page-footer">
+            <div class="footer-copyright">
+                <div class="container">
+                © 2015 Copyright mba-software
+                <a class="grey-text text-lighten-4 right" href="http://www.mba-software.com/">http://www.mba-software.com/</a>
+                </div>
+            </div>
+        </footer>
+    </body>
+</html>
+        

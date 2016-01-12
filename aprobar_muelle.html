@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+
+        <!--Import Google Icon Font-->
+        <link href="http://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+        <link type="text/css" rel="stylesheet" href="/ITCM/Contenido/Materialize/css/materialize.min.css"  media="screen,projection"/>
+
+        <!--Let browser know website is optimized for mobile-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <meta name="author" content="mba-software">
+
+        <!--Let browser know website is optimized for mobile-->
+        <script type="text/javascript" src="/ITCM/Contenido/Js/jquery-1.11.3.min.js"></script>
+        <script type="text/javascript" src="/ITCM/Contenido/Materialize/js/materialize.min.js"></script>
+
+        <script type="text/javascript" src="/ITCM/Contenido/js/hammer.min.js"></script>
+
+        <link rel="stylesheet" href="/ITCM/Contenido/Css/Fuente/LCDBOLD/font.css"/>
+
+        <link rel="stylesheet" href="/ITCM/Contenido/Css/custom.css"/>
+		
+		<script type="text/javascript" src="/ITCM/Contenido/Highcharts/js/highcharts.js"></script>
+        <script src="/ITCM/Contenido/Highcharts/js/modules/exporting.js"></script>
+
+        <style>
+            footer{
+                position: absolute !important;
+                bottom: 0 !important;
+                width: 100% !important;
+            }
+
+            .FuenteLCD{
+                font-family: 'LCDBOLD' !important;
+                font-size: 100px !important;
+                text-align:center !important;
+                text-shadow: 4px 4px 4px #aaa !important;
+            }
+
+            .card-content{
+                padding: 10px !important;
+            }
+
+            .card-content a{
+                text-align: center !important;
+                width: 49% !important;
+            }
+			
+			.dropdown-content{
+				top: 0 !important;
+				z-index:999999999 !important;
+			}
+			
+        </style>
+        <script>
+			var razon_cierre=null;
+			var muelle_cerrar=null;
+			var NoDespacho=null;
+			var Placa_Vehiculo=null;
+			var contador_alarmas=0;
+						
+			function CargarMuelle() {
+                $.ajax({
+                    type: "POST",
+                    url: "/ITC/TableroMuelleMobil/TableroMuelleMaster?opcion=APROBAR_CIERRE_MUELLE",
+                    cache: false,
+					contentType: "application/json; charset=utf-8",
+					data:{opcion:'APROBAR_CIERRE_MUELLE'},
+					dataType: "json",
+                    success: function (Muelle) {
+
+                        $("#ContMuelles").empty();
+
+                        if (Muelle.length <= 0) {
+                            //$("#DivContenedorMuelles").append('<h1>NO HAY DESPACHOS EN PROCESO EN ESTE MOMENTO</h1>');
+							CargarIndicadoresTransporte();	
+                            return false;
+                        }
+						
+						muelle_cerrar= Muelle.Muelle;
+						NoDespacho= Muelle.NoDespacho;
+						Placa_Vehiculo= Muelle.Vehiculo;
+												
+						CargarIndicadoresTransporte();						
+						
+                        //Actualizar Info de los muelles
+						console.log('IP Actual: ' + Muelle.IpEquipoActual);
+                      
+					  /*
+						//Activa Alarma para el muelle
+						if (Muelle.SonarAlarma == 1 || Muelle.SonarAlarma == 2) {     
+							setInterval(function () { $(".Porcentaje_" + Muelle.Muelle).toggleClass("Alarma"); }, 1000);
+							contador_alarmas=contador_alarmas+1;
+						}
+						else {
+							$("#PorcentajeUtilizacion").removeClass("Alarma");
+						}  */    
+						
+                          
+						$("#Muelle").html(Muelle.Muelle);
+						
+						$("#PorcentajeUtilizacion").html(Muelle.PorcentajeUtilizacion);
+						$("#PorcentajeUtilizacion").css("color", Muelle.ColorPorcentajeUtilizacion);
+
+						$("#TiempoTotalCargue").html(Muelle.TiempoTotalCargue);
+						$("#TiempoTotalCargue").css("color", Muelle.ColorTiempototalCargue);
+
+						$("#TiempoUltimaEstiba").html(Muelle.TiempoUltimaEstiba);
+						$("#TiempoUltimaEstiba").css("color", Muelle.ColorTiempoUltimaEstiba);
+					 },
+                    error: function (result) {
+						Materialize.toast(result1.responseText, 9999999999999999999999,'red',function(){void(0);});
+                        //alert(':ERROR ' + result.statusText);
+                    }
+                });
+            }
+		
+			function SetRazon_cierre(razon){
+				razon_cierre=razon;
+			}
+		
+			function CargarRazonesCierre() {
+				razon_cierre=null;
+			
+                $.ajax({				
+					type: "POST",
+                    url: "/ITC/TableroMuelleMobil/TableroMuelleMaster?opcion=RAZONES_CIERRE",
+                    cache: false,
+					contentType: "application/json; charset=utf-8",
+					data:{opcion:'RAZONES_CIERRE'},
+					dataType: "json",
+                    success: function (RazonCierre) {
+
+                        $("#cbo_razon_cierre").empty();
+
+                        if (RazonCierre.length <= 0) {
+                            //$("#DivContenedorMuelles").append('<h1>NO HAY DESPACHOS EN PROCESO EN ESTE MOMENTO</h1>');
+                            return false;
+                        }
+						
+						
+						$("#cbo_razon_cierre").append('<option value="" disabled selected>Selecionar Razon de cierre</option>');
+						
+                         //Actualizar Info de las razones de cierre
+                        RazonCierre.forEach(function (Razon) {	
+							$("#cbo_razon_cierre").append('<option value="'+ Razon.Descripcion +'">' + Razon.Descripcion +' </option>');
+						});
+						
+						$('select').material_select();
+					 },
+                    error: function (result) {
+						Materialize.toast(result1.responseText, 9999999999999999999999,'red',function(){void(0);});
+                        //alert(':ERROR ' + result.statusText);
+                    }
+                });
+            }
+			
+			function CerrarMuelle(accion) {
+				if (muelle_cerrar == null || NoDespacho==null) {
+					Materialize.toast('Error: No se encontro el muelle para cerrar!', 3000,'red',function(){void(0);});
+					//alert('Error: No se encontro el muelle para cerrar!');
+					return false;
+				}
+				if (accion == 'APROBAR' && (razon_cierre == ''|| razon_cierre == null) ) {
+					Materialize.toast('Error: Favor selecionar una razon de cierre!', 3000,'red',function(){void(0);});
+					//alert('Error: Favor selecionar una razon de cierre!');
+					return false;
+				}
+
+				//ACCION = 'NO_APROBADO'
+				$.ajax({
+					type: "POST",
+					url: "/ITC/TableroMuelleMobil/TableroMuelleCerrarMuelle?accion="+accion+"&razon_cierre="+razon_cierre+"&muelle_cerrar="+muelle_cerrar+"&NoDespacho="+NoDespacho,
+					data: {
+						accion: accion,
+						razon_cierre: razon_cierre,
+						muelle_cerrar: muelle_cerrar,
+						NoDespacho: NoDespacho,
+					},
+					success: function (data) {
+					
+						Materialize.toast('Muelle No. '+muelle_cerrar+' Despacho No. '+ NoDespacho, 9999999999999999999999,'green',function(){void(0);});
+							
+						muelle_cerrar = null;
+						NoDespacho = null;
+						
+						location.href=location.origin+'/ITCM/';
+					},
+					error: function (result1) {
+						muelle_cerrar = null;
+						NoDespacho = null;
+						Materialize.toast(result1.responseText, 9999999999999999999999,'red',function(){void(0);});
+						//alert(result1.responseText);
+					}
+				});
+			}
+		
+			function CargarGraficoIndicadores(DataIndicadores){
+				$('#grafico').highcharts({
+					chart: {
+						plotBackgroundColor: null,
+						plotBorderWidth: null,
+						plotShadow: false,
+						type: 'pie'
+					},
+					title: {
+						text: ''
+					},
+					tooltip: {
+						pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+					},
+					plotOptions: {
+						pie: {
+							allowPointSelect: true,
+							cursor: 'pointer',
+							dataLabels: {
+								enabled: true,
+								format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+								style: {
+									color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+								}
+							}
+						}
+					},
+					series: [{
+						name: "",
+						colorByPoint: true,
+						data: DataIndicadores
+					}]
+				});
+			}
+	
+			function CargarIndicadoresTransporte(){
+				if(NoDespacho=='' || NoDespacho==null){
+					NoDespacho='';
+					//Materialize.toast('No se encontro el No. Despacho.', 5000,'red',0);
+					//return false;
+				}
+				
+				if(Placa_Vehiculo=='' || Placa_Vehiculo==null){
+					Placa_Vehiculo='';
+					//Materialize.toast('No se encontro el Vehiculo.', 5000,'red',0);
+					//return false;
+				}
+				
+				$.ajax({
+                    type: "POST",
+                    url: "/ITC/TableroMuelleMobil/TableroMuelleMaster?opcion=INDICADORES&caso=1&NoDespacho="+NoDespacho+"&Placa_Vehiculo="+Placa_Vehiculo,
+                    cache: false,
+					contentType: "application/json; charset=utf-8",
+					//data:{opcion:'MUELLES'},
+					dataType: "json",
+                    success: function (data) {
+						CargarGraficoIndicadores(data);                          
+					},
+                    error: function (result) {
+                        //alert(':ERROR ' + result.statusText);
+                    }
+                });
+			}
+			
+            $(document).ready(function(){
+                $(".button-collapse").sideNav();
+
+                $(".section a").click(function(){
+                    $(this).css("background-color","#eeeeee !important");
+                });
+
+				$('.modal-trigger').click(function (){
+					$('#modal_razon_cierre').openModal();
+					CargarRazonesCierre();
+				});
+				
+				$("#cbo_razon_cierre").change(function (){
+					if($(this).val()=='')
+						return false;
+						
+					SetRazon_cierre($(this).val());
+				});
+				
+				CargarMuelle();
+				//setInterval(CargarMuelle, 7000);   
+            });
+			
+			
+			$(document).on('click', '#toast-container .toast', function() {				
+				$(this).fadeOut(function(){
+					$(this).remove();
+				});
+			});
+
+        </script>
+    </head>
+
+    <body>
+        <nav>
+            <div class="nav-wrapper">
+                <a href="index.html" class="brand-logo">Cartonera S.A</a>
+            </div>
+        </nav>
+
+        <div class="container">
+            <div class="row">
+                <div class="col s12 Muelles">
+                    <br/>
+
+                    <label style="font-size: 15px;">Aprobacion cierre de muelle #&nbsp;<span style="color:#283593;font-size: 20px;" id="Muelle">No hay muelle pendiente por cerrar</span></label>
+
+                    <div class="divider" style="margin-bottom: 10px;"></div>
+
+                    <div class="card">
+                        <div class="card-image waves-effect waves-block waves-light" style="text-align: center;height: 140px !important;">
+                            <span class="FuenteLCD" style="font-size: 120px !important;" id="PorcentajeUtilizacion">0</span>
+                        </div>
+                        <div class="card-content">
+                            <!--<span class="card-title activator grey-text text-darken-4">Muelle <i class="material-icons right">more_vert</i></span>-->
+                            <!--<table>
+                                <tr>
+                                    <td><p>T C.:&nbsp;<span id="TiempoTotalCargue">00:00:00</span></p></td>
+                                    <td><p>T E.:&nbsp;<span id="TiempoUltimaEstiba">00:00:00</span></p></td>
+                                </tr>
+                            </table>-->
+
+                            <div class="divider" style="margin-bottom: 10px;"></div>
+                            <!-- Modal Trigger -->
+							<!--<a class="btn tooltipped btn_resize modal-trigger waves-effect waves-light " data-target="modal_razon_cierre" href="#modal_razon_cierre" data-position="bottom" data-delay="50" data-tooltip="Aprobar cierre del muelle">Aprobar</a>-->
+                            <a class="btn tooltipped  modal-trigger waves-effect waves-light green " href="javascript:void(0);" data-position="bottom" data-delay="50" data-tooltip="Aprobar cierre del muelle">Aprobar</a>
+                            <a href="javascript:CerrarMuelle('NO_APROBADO')" class="btn tooltipped red" data-position="bottom" data-delay="50" data-tooltip="Aprobar cierre del muelle">No Aprobar</a>
+                        </div>
+                        <!--<div class="card-reveal">
+                            <span class="card-title grey-text text-darken-4">Muelle No. <code>1</code><i class="material-icons right">close</i></span>
+                            <p>Muelle inicio carga yyyy-mm-dd hh:mm:ss y actualmente cuenta con un % de cubicaje del <code>1</code></p>
+                        </div>-->
+                    </div>
+                </div>
+            </div>
+			
+			<div class="row">					
+				<div class="col s12">
+					<br/>
+					<div id="grafico" style="min-width: 310px; height: 400px; max-width: 600px; margin: 0 auto"></div>
+				</div>
+			</div>
+        </div>
+
+        <footer class="page-footer">
+            <div class="footer-copyright">
+                <div class="container">
+                    © 2015 Copyright mba-software
+                    <a class="grey-text text-lighten-4 right" href="http://www.mba-software.com/">http://www.mba-software.com/</a>
+                </div>
+            </div>
+        </footer>
+
+        <!-- Modal Structure -->
+        <div id="modal_razon_cierre" class="modal modal-fixed-footer">
+            <div class="modal-content" style="height:auto !important;">
+                <div class="container">
+                    <div class="row">
+                        <div class="col s12">
+                            <h5>Razon de cierre</h5>
+                            <div class="divider" style="margin-bottom: 10px;"></div>
+                        </div>
+                        <div class="col s12">
+							<select class="browser-default blue" id="cbo_razon_cierre"></select>
+  
+                            <!--<ul id="cbo_razon_cierre" class="dropdown-content" style="width: 80% !important;"></ul>							
+                            <a class="btn dropdown-button" style=" width: 99% !important;margin-bottom: 5px !important;" href="javascript:void(0);" data-activates="cbo_razon_cierre">Razon Cierre<i class="mdi-navigation-arrow-drop-down right"></i></a>
+                            <a class="btn dropdown-button" style=" width: 99% !important;margin-bottom: 5px !important;" href="javascript:void(0);" data-activates="cbo_razon_cierre">Razon Cierre<i class="mdi-navigation-arrow-drop-down right"></i></a>-->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="javascript:CerrarMuelle('APROBAR')" style="color: #ffffff !important;" class=" modal-action modal-close waves-effect waves-green btn-flat btn_resize">Confirmar</a>
+								
+				<a href="javascript:void(0);" style="color: #ffffff !important;margin-right: 10px;" class=" modal-action modal-close waves-effect waves-green btn-flat red">Salir</a>
+            </div>
+        </div>
+    </body>
+</html>
+        
