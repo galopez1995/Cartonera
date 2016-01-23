@@ -13,9 +13,9 @@
         Cartonera Tablero de Cargue
     </description>
 
-    <author href="mba-software.com" email="info@mba-software.com">
+    <!--<author href="mba-software.com" email="info@mba-software.com">
         MBA Software
-    </author>
+    </author>-->
 <!--
     <gap:plugin name="org.apache.cordova.geolocation" />
     <gap:plugin name="org.apache.cordova.splashscreen" />
